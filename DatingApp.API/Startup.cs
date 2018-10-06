@@ -18,8 +18,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Diagnostics;
+
 using DatingApp.API.Data;
 using DatingApp.API.Helpers;
+using AutoMapper;
 
 namespace DatingApp.API
 {
@@ -38,13 +40,25 @@ namespace DatingApp.API
             //Register DbContext by ME.
             services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(opt =>
+                {
+                    opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                }); // To avoid page crash while calling API GetUsers() http://localhost:5000/api/users
 
             //Cross orgin resource sharing services by ME.
             services.AddCors();
 
+            services.AddAutoMapper();
+
+            //Added Seed Class by ME.
+            services.AddTransient<Seed>();
+
             //AUTH Service Registration by ME.
             services.AddScoped<IAuthRepository, AuthRepository>(); //Interface + Concrete Class.
+
+            //Initiating Repository Service by ME.
+            services.AddScoped<IDatingRepository, DatingRepository>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -63,7 +77,7 @@ namespace DatingApp.API
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -71,12 +85,14 @@ namespace DatingApp.API
             }
             else
             {
-                app.UseExceptionHandler(builder => {
-                    builder.Run(async context => {
+                app.UseExceptionHandler(builder =>
+                {
+                    builder.Run(async context =>
+                    {
                         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
                         var error = context.Features.Get<IExceptionHandlerFeature>();
-                        if(error != null)
+                        if (error != null)
                         {
                             context.Response.AddApplicationError(error.Error.Message);
                             await context.Response.WriteAsync(error.Error.Message);
@@ -87,6 +103,9 @@ namespace DatingApp.API
             }
 
             // app.UseHttpsRedirection();
+
+            //This is commented after generating seed Users, In future if we drop DB and again required to regenerate Users table data by Reseeding.
+            //seeder.SeedUsers();
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 
