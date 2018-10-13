@@ -60,6 +60,10 @@ namespace DatingApp.API
             //Initiating Repository Service by ME.
             services.AddScoped<IDatingRepository, DatingRepository>();
 
+            //Cloud Settings
+            services.Configure<cloudinarySettings>(Configuration.GetSection("CloudinarySettings"));
+
+            //Auth token
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
