@@ -27,14 +27,13 @@ namespace DatingApp.API
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
+        // This method gets called by the runtime. Use this method to add services(nathing but Class) to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             //Register DbContext by ME.
@@ -108,7 +107,8 @@ namespace DatingApp.API
 
             // app.UseHttpsRedirection();
 
-            //This is commented after generating seed Users, In future if we drop DB and again required to regenerate Users table data by Reseeding.
+            //This is commented & required only once after generating seed Users, 
+            // In future if we drop DB and again required to regenerate Users table data by Reseeding.
             //seeder.SeedUsers();
 
             app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
